@@ -1,0 +1,51 @@
+# Install pre-commit:
+# pip install pre-commit
+# pre-commit install
+# pre-commit install --hook-type pre-push
+# Run pre-commit:
+# pre-commit run -a
+# For more information, see https://pre-commit.com
+
+default_language_version:
+  python: python3.11
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-ast
+      - id: check-yaml
+      - id: check-json
+      - id: pretty-format-json
+        args: [--autofix, --indent=2, --no-ensure-ascii, --no-sort-keys]
+        files: ^.*\.json$
+      - id: check-executables-have-shebangs
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        name: Run black
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: Run isort
+        args: [--settings-path=setup.cfg]
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.1.1
+    hooks:
+      - id: autoflake
+        name: Run autoflake
+        args: [--config=setup.cfg]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        name: Run flake8
+        args: [--config=setup.cfg]
+        stages: [push]
