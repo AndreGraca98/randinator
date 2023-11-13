@@ -3,6 +3,7 @@ import string
 import uuid
 from dataclasses import dataclass
 from datetime import date
+from io import TextIOWrapper
 from logging import getLogger
 from pathlib import Path
 from typing import Any
@@ -45,8 +46,8 @@ class TextBuilder(Builder):
         assert isinstance(self.post_word, str), f"{self=}"
 
     def generate(self) -> str:
-        nwords = random.randint(self.min_word_number, self.max_word_number)
-        words = " ".join(self.__word for _ in range(nwords))
+        word_number = random.randint(self.min_word_number, self.max_word_number)
+        words = " ".join(self.__word for _ in range(word_number))
         text = f"{self.pre_word} {words} {self.post_word}".strip()
         return text
 
@@ -61,7 +62,7 @@ class TextBuilder(Builder):
 
 @dataclass(kw_only=True)
 class FileTextBuilder(Builder):
-    filepath: Path | str
+    filepath: Path | str | TextIOWrapper
     min_word_number: int
     max_word_number: int
     pre_word: str = ""
@@ -76,19 +77,25 @@ class FileTextBuilder(Builder):
         assert 0 < self.min_word_number <= self.max_word_number, f"{self=}"
         assert isinstance(self.pre_word, str), f"{self=}"
         assert isinstance(self.post_word, str), f"{self=}"
-        assert isinstance(self.filepath, (Path, str)), f"{self=}"
-        assert Path(self.filepath).is_file(), f"{self.filepath} does not exist"
-        assert Path(self.filepath).read_text(), f"{self.filepath} is empty"
+        assert isinstance(self.filepath, (Path, str, TextIOWrapper)), f"{self=}"
+
+        if isinstance(self.filepath, (str, Path)):
+            self._file_data = Path(self.filepath).read_text()
+        elif isinstance(self.filepath, TextIOWrapper):
+            self._file_data = self.filepath.read()
+        else:
+            raise TypeError(f"{self.filepath=} is not a valid type")
+        assert self._file_data, f"{self.filepath} is empty"
 
     def generate(self) -> str:
-        nwords = random.randint(self.min_word_number, self.max_word_number)
-        words = " ".join(self.__word for _ in range(nwords))
+        word_number = random.randint(self.min_word_number, self.max_word_number)
+        words = " ".join(self.__word for _ in range(word_number))
         text = f"{self.pre_word} {words} {self.post_word}".strip()
         return text
 
     @property
     def __word(self) -> str:
-        return random.choice(Path(self.filepath).read_text().split("\n"))
+        return random.choice(self._file_data.split("\n"))
 
     def sanitize(self, value: Any) -> Any:
         return str(value)

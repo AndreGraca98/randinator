@@ -19,7 +19,7 @@ def test_text_builder():
 
 
 def test_file_text_builder_file_not_found():
-    with pytest.raises(AssertionError):
+    with pytest.raises(FileNotFoundError):
         FileTextBuilder(
             filepath="nonexistent.txt", min_word_number=1, max_word_number=5
         )
@@ -34,13 +34,7 @@ def test_file_text_builder_file_empty(tmp_path):
 
 def test_file_text_builder(tmp_path):
     file = tmp_path / "test.txt"
-    file.write_text(
-        """hi
-hello
-world
-bye
-"""
-    )
+    file.write_text("hi\nhello\nworld\nbye\n")
     builder = FileTextBuilder(filepath=file, min_word_number=1, max_word_number=5)
     text = builder.build()
     for word in text.split():
