@@ -26,9 +26,10 @@ class Builder(ABC):
     default_type: type = NotImplemented
 
     def __init_subclass__(cls, *args, **kwargs):
-        super().__init_subclass__(*args, **kwargs)
+        """Registers the builder class with the name of the class normalized."""
 
         def normalize_name(name: str) -> str:
+            assert "builder" in name.lower(), f"cls with {name=} must contain 'builder'"
             __name = ""
             for i, letter in enumerate(name):
                 __name += f"_{letter}" if letter.isupper() and i > 0 else letter
@@ -47,7 +48,7 @@ class Builder(ABC):
         assert self.default is not NotImplemented, msg("default")
         assert self.default_type is not NotImplemented, msg("default_type")
         if self.default is not None:
-            assert isinstance(self.default, self.default_type)
+            assert isinstance(self.default, self.default_type), f"{self=}"
 
     def __call__(self) -> Any:
         return self.build()

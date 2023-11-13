@@ -17,7 +17,7 @@ class IntegerBuilder(Builder):
 
     def __post_init__(self):
         super().__post_init__()
-        assert self.min_value <= self.max_value
+        assert self.min_value <= self.max_value, f"{self=}"
 
     def generate(self) -> int:
         return random.randint(self.min_value, self.max_value)
@@ -45,9 +45,9 @@ class FloatBuilder(Builder):
 
     def __post_init__(self):
         super().__post_init__()
-        assert self.min_value <= self.max_value
-        assert isinstance(self.decimal_places, int)
-        assert self.decimal_places >= 0
+        assert self.min_value <= self.max_value, f"{self=}"
+        assert isinstance(self.decimal_places, int), f"{self=}"
+        assert self.decimal_places >= 0, f"{self=}"
 
     def generate(self) -> float:
         return self.__round(random.uniform(self.min_value, self.max_value))
@@ -72,7 +72,7 @@ class PercentageBuilder(FloatBuilder):
 
     def __post_init__(self):
         super().__post_init__()
-        assert 0.0 <= self.min_value <= self.max_value <= 100.0
+        assert 0.0 <= self.min_value <= self.max_value <= 100.0, f"{self=}"
 
 
 @dataclass
