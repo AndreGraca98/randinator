@@ -15,6 +15,12 @@ test: ## Run tests
 lint: ## Run linters
 	pre-commit run -a
 
+coverage: ## Generate test coverage report
+	coverage run --rcfile setup.cfg -m pytest -qqq
+	coverage html --rcfile setup.cfg
+	coverage xml --rcfile setup.cfg
+	coverage report --rcfile setup.cfg
+
 define clean_pattern
 	@echo "Removing $(1)"
 	find . -name $(1) -exec rm -rf {} +

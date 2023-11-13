@@ -66,9 +66,9 @@ class FloatBuilder(Builder):
         assert self.decimal_places >= 0, f"{self=}"
 
     def generate(self) -> float:
-        return self.__round(random.uniform(self.min_value, self.max_value))
+        return self._round(random.uniform(self.min_value, self.max_value))
 
-    def __round(self, value: float) -> float:
+    def _round(self, value: float) -> float:
         return round(value, self.decimal_places)
 
     def sanitize(self, value: Any) -> float:
@@ -101,7 +101,7 @@ class DecimalBuilder(FloatBuilder):
         return value.quantize(qtz_dec, rounding="ROUND_HALF_UP")
 
     @override
-    def __round(self, value: float) -> Decimal:
+    def _round(self, value: float) -> Decimal:
         return self.__quantize(Decimal(value))
 
     def sanitize(self, value: Any) -> Decimal:
