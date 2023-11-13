@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from randinator.builders.base import Builder
-
-__all__ = []
+from randinator.builders.base import Builder, register
 
 
 @dataclass
-class NumberBuilder(Builder):
+@register
+class IntegerBuilder(Builder):
+    builder_name: str = "int"
     min_value: int = -1000
     max_value: int = 1000
     default: int | None = None
@@ -27,19 +27,9 @@ class NumberBuilder(Builder):
 
 
 @dataclass
-class NumberPositiveBuilder(NumberBuilder):
-    min_value: int = 0
-    max_value: int = 1000
-
-
-@dataclass
-class NumberNegativeBuilder(NumberBuilder):
-    min_value: int = -1000
-    max_value: int = 0
-
-
-@dataclass
-class NumberStrBuilder(NumberBuilder):
+@register
+class IntegerStrBuilder(IntegerBuilder):
+    builder_name: str = "int_str"
     default: str | None = None
     default_type: type = str
 
@@ -48,7 +38,9 @@ class NumberStrBuilder(NumberBuilder):
 
 
 @dataclass
+@register
 class FloatBuilder(Builder):
+    builder_name: str = "float"
     min_value: float = -1000.0
     max_value: float = 1000.0
     decimal_places: int = 2
@@ -59,6 +51,7 @@ class FloatBuilder(Builder):
         super().__post_init__()
         assert self.min_value <= self.max_value
         assert isinstance(self.decimal_places, int)
+        assert self.decimal_places >= 0
 
     def generate(self) -> float:
         return self._round(random.uniform(self.min_value, self.max_value))
@@ -71,25 +64,18 @@ class FloatBuilder(Builder):
 
 
 @dataclass
-class FloatPositiveBuilder(FloatBuilder):
-    min_value: float = 0.0
-    max_value: float = 1000.0
-
-
-@dataclass
-class FloatNegativeBuilder(FloatBuilder):
-    min_value: float = -1000.0
-    max_value: float = 0.0
-
-
-@dataclass
+@register
 class FloatStrBuilder(FloatBuilder):
+    builder_name: str = "float_str"
+
     def sanitize(self, value: Any) -> str:
         return str(value)
 
 
 @dataclass
+@register
 class PercentageBuilder(FloatBuilder):
+    builder_name: str = "percentage"
     min_value: float = 0.0
     max_value: float = 100.0
     decimal_places: int = 2
@@ -100,7 +86,9 @@ class PercentageBuilder(FloatBuilder):
 
 
 @dataclass
+@register
 class DecimalBuilder(FloatBuilder):
+    builder_name: str = "decimal"
     default: Decimal | None = None
     default_type: type = Decimal
 
