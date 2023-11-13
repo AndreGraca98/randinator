@@ -8,7 +8,6 @@ __all__ = [
     "get_builders",
     "get_builder",
     "get_builder_names",
-    "register",
 ]
 
 _log = getLogger(__name__)
@@ -56,7 +55,9 @@ class Builder(ABC):
 
     def build(self) -> Any:
         if self.default is not None:
+            _log.debug(f"Using default {self.default} for {self.__class__}")
             return self.default
+        _log.debug(f"Building {self.__class__} random item")
         return self.sanitize(self.generate())
 
     @abstractmethod
