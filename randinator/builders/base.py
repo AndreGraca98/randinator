@@ -1,6 +1,17 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from logging import getLogger
 from typing import Any
+
+__all__ = [
+    "Builder",
+    "get_builders",
+    "get_builder",
+    "get_builder_names",
+    "register",
+]
+
+_log = getLogger(__name__)
 
 
 @dataclass
@@ -11,14 +22,27 @@ class Builder(ABC):
     value will be generated.
     """
 
-    builder_name: str = NotImplemented
     default: Any = NotImplemented
     default_type: type = NotImplemented
 
-    def __post_init__(self) -> None:
-        self.__assert_default_type()
+    def __init_subclass__(cls, *args, **kwargs):
+        super().__init_subclass__(*args, **kwargs)
 
-    def __assert_default_type(self) -> None:
+        def normalize_name(name: str) -> str:
+            __name = ""
+            for i, letter in enumerate(name):
+                __name += f"_{letter}" if letter.isupper() and i > 0 else letter
+            return __name.lower().replace("builder", "").strip("_")
+
+        # Set the normalized name for the builder, used for registering
+        name = normalize_name(cls.__name__)
+        setattr(cls, "__normalized_name", name)
+        register(cls)
+
+    def __post_init__(self) -> None:
+        self.__assert_defaults()
+
+    def __assert_defaults(self) -> None:
         msg = lambda attr: f"{attr} must be provided for {self.__class__}"  # noqa: E731
         assert self.default is not NotImplemented, msg("default")
         assert self.default_type is not NotImplemented, msg("default_type")
@@ -45,29 +69,38 @@ class Builder(ABC):
 __BUILDERS = dict()
 
 
-def register(cls):
-    assert (
-        cls.builder_name is not NotImplemented
-    ), f"builder_name must be provided for {cls}"
-    assert isinstance(cls.builder_name, str)
+def register(cls: type[Builder]):
+    """Registers a builder class. The builder_name must
+    be provided and must be unique"""
+    builder_name = cls.__normalized_name  # type: ignore
+    _log.debug(f"Registering {cls} with name {builder_name}")
+
+    assert builder_name is not NotImplemented, f"name must be provided for {cls}"
+    assert isinstance(builder_name, str)
 
     builders = get_builders()
-    if cls.builder_name in get_builder_names():
+    if builder_name in get_builder_names():
         raise ValueError(
-            f"{cls} with builder_name {cls.builder_name!r} already "
-            f"registered for {builders[cls.builder_name]}"
+            f"Tried to register {cls} with the same "
+            f"name={builder_name!r} for {builders[builder_name]}"
         )
     if cls in builders:
         raise ValueError(f"Builder {cls} already registered")
 
-    __BUILDERS[cls.builder_name] = cls
+    __BUILDERS[builder_name] = cls
     return cls
 
 
 def get_builders() -> dict[str, Builder]:
+    """Returns a dict of all registered builders"""
     return __BUILDERS
 
 
+def get_builder(name: str) -> Builder:
+    """Returns a builder by name"""
+    return get_builders()[name]
+
+
 def get_builder_names() -> list[str]:
+    """Returns a list of all registered builder names"""
     return list(get_builders().keys())
-    # return [v.builder_name for k, v in get_builders().items()]

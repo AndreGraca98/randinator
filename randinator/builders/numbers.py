@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from randinator.builders.base import Builder, register
+from typing_extensions import override
+
+from randinator.builders.base import Builder
 
 
 @dataclass
-@register
 class IntegerBuilder(Builder):
-    builder_name: str = "int"
     min_value: int = -1000
     max_value: int = 1000
     default: int | None = None
@@ -27,9 +27,7 @@ class IntegerBuilder(Builder):
 
 
 @dataclass
-@register
 class IntegerStrBuilder(IntegerBuilder):
-    builder_name: str = "int_str"
     default: str | None = None
     default_type: type = str
 
@@ -38,9 +36,7 @@ class IntegerStrBuilder(IntegerBuilder):
 
 
 @dataclass
-@register
 class FloatBuilder(Builder):
-    builder_name: str = "float"
     min_value: float = -1000.0
     max_value: float = 1000.0
     decimal_places: int = 2
@@ -54,9 +50,9 @@ class FloatBuilder(Builder):
         assert self.decimal_places >= 0
 
     def generate(self) -> float:
-        return self._round(random.uniform(self.min_value, self.max_value))
+        return self.__round(random.uniform(self.min_value, self.max_value))
 
-    def _round(self, value: float) -> float:
+    def __round(self, value: float) -> float:
         return round(value, self.decimal_places)
 
     def sanitize(self, value: Any) -> float:
@@ -64,21 +60,15 @@ class FloatBuilder(Builder):
 
 
 @dataclass
-@register
 class FloatStrBuilder(FloatBuilder):
-    builder_name: str = "float_str"
-
     def sanitize(self, value: Any) -> str:
         return str(value)
 
 
 @dataclass
-@register
 class PercentageBuilder(FloatBuilder):
-    builder_name: str = "percentage"
     min_value: float = 0.0
     max_value: float = 100.0
-    decimal_places: int = 2
 
     def __post_init__(self):
         super().__post_init__()
@@ -86,15 +76,17 @@ class PercentageBuilder(FloatBuilder):
 
 
 @dataclass
-@register
 class DecimalBuilder(FloatBuilder):
-    builder_name: str = "decimal"
     default: Decimal | None = None
     default_type: type = Decimal
 
-    def _round(self, value: float) -> Decimal:
-        rounding = f"0.{'0' * self.decimal_places}"
-        return Decimal(value).quantize(Decimal(rounding), rounding="ROUND_HALF_UP")
+    def __quantize(self, value: Decimal) -> Decimal:
+        qtz_dec = Decimal(f"0.{'0' * self.decimal_places}")
+        return value.quantize(qtz_dec, rounding="ROUND_HALF_UP")
+
+    @override
+    def __round(self, value: float) -> Decimal:
+        return self.__quantize(Decimal(value))
 
     def sanitize(self, value: Any) -> Decimal:
-        return Decimal(value)
+        return self.__quantize(Decimal(value))
