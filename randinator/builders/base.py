@@ -26,7 +26,8 @@ class Builder(ABC):
     default_type: type = NotImplemented
 
     def __init_subclass__(cls, *args, **kwargs):
-        """Registers the builder class with the name of the class normalized."""
+        """Registers the builder class with the name of the class normalized.
+        Note: A class will only be registered if it is imported."""
 
         def normalize_name(name: str) -> str:
             assert "builder" in name.lower(), f"cls with {name=} must contain 'builder'"

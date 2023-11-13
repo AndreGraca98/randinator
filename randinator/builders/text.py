@@ -3,6 +3,7 @@ import string
 import uuid
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 from randinator.builders.base import Builder
@@ -10,10 +11,10 @@ from randinator.builders.base import Builder
 LETTERS = string.ascii_lowercase
 
 
-@dataclass
+@dataclass(kw_only=True)
 class TextBuilder(Builder):
-    min_word_number: int = 1
-    max_word_number: int = 1
+    min_word_number: int
+    max_word_number: int
     min_length: int = 5
     max_length: int = 10
     pre_word: str = ""
@@ -23,7 +24,11 @@ class TextBuilder(Builder):
 
     def __post_init__(self):
         super().__post_init__()
+        assert isinstance(self.min_word_number, int), f"{self=}"
+        assert isinstance(self.max_word_number, int), f"{self=}"
         assert 0 < self.min_word_number <= self.max_word_number, f"{self=}"
+        assert isinstance(self.min_length, int), f"{self=}"
+        assert isinstance(self.max_length, int), f"{self=}"
         assert 0 < self.min_length <= self.max_length, f"{self=}"
         assert isinstance(self.pre_word, str), f"{self=}"
         assert isinstance(self.post_word, str), f"{self=}"
@@ -43,7 +48,40 @@ class TextBuilder(Builder):
         return str(value)
 
 
-@dataclass
+@dataclass(kw_only=True)
+class FileTextBuilder(Builder):
+    filepath: Path | str
+    min_word_number: int
+    max_word_number: int
+    pre_word: str = ""
+    post_word: str = ""
+    default: str | None = None
+    default_type: type = str
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        assert isinstance(self.min_word_number, int), f"{self=}"
+        assert isinstance(self.max_word_number, int), f"{self=}"
+        assert 0 < self.min_word_number <= self.max_word_number, f"{self=}"
+        assert isinstance(self.pre_word, str), f"{self=}"
+        assert isinstance(self.post_word, str), f"{self=}"
+        assert isinstance(self.filepath, (Path, str)), f"{self=}"
+
+    def generate(self) -> str:
+        nwords = random.randint(self.min_word_number, self.max_word_number)
+        words = " ".join(self.__word for _ in range(nwords))
+        text = f"{self.pre_word} {words} {self.post_word}".strip()
+        return text
+
+    @property
+    def __word(self) -> str:
+        return random.choice(Path(self.filepath).read_text().split("\n"))
+
+    def sanitize(self, value: Any) -> Any:
+        return str(value)
+
+
+@dataclass(kw_only=True)
 class Uuid4StrBuilder(Builder):
     default: str | None = None
     default_type: type = str
@@ -62,7 +100,7 @@ class Uuid4StrBuilder(Builder):
         return str(value)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DateStrBuilder(Builder):
     """Builds a date string in isoformat. If no default is provided,
     a random date is generated. Can be forced to generate a specific
@@ -74,7 +112,15 @@ class DateStrBuilder(Builder):
     default: str | None = None
     default_type: type = str
 
-    def __init__(self) -> None:
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        assert self.year is None or isinstance(self.year, int), f"{self=}"
+        assert self.month is None or isinstance(self.month, int), f"{self=}"
+        assert self.day is None or isinstance(self.day, int), f"{self=}"
+        y = self.year if self.year is not None else 2000
+        m = self.month if self.month is not None else 1
+        d = self.day if self.day is not None else 1
+        date(y, m, d)  # If date can be created it's a valid combination
         if self.default is not None:
             assert isinstance(self.default, str)
             date.fromisoformat(self.default)  # Check if valid date
