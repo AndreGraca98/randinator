@@ -13,11 +13,11 @@ class NumberBuilder(Builder):
     min_value: int = -1000
     max_value: int = 1000
     default: int | None = None
+    default_type: type = int
 
     def __post_init__(self):
+        super().__post_init__()
         assert self.min_value <= self.max_value
-        if self.default is not None:
-            assert isinstance(self.default, int)
 
     def generate(self) -> int:
         return random.randint(self.min_value, self.max_value)
@@ -40,10 +40,8 @@ class NumberNegativeBuilder(NumberBuilder):
 
 @dataclass
 class NumberStrBuilder(NumberBuilder):
-    def __post_init__(self):
-        assert self.min_value <= self.max_value
-        if self.default is not None:
-            assert isinstance(self.default, str)
+    default: str | None = None
+    default_type: type = str
 
     def sanitize(self, value: Any) -> str:
         return str(value)
@@ -55,11 +53,11 @@ class FloatBuilder(Builder):
     max_value: float = 1000.0
     decimal_places: int = 2
     default: float | None = None
+    default_type: type = float
 
     def __post_init__(self):
+        super().__post_init__()
         assert self.min_value <= self.max_value
-        if self.default is not None:
-            assert isinstance(self.default, float)
         assert isinstance(self.decimal_places, int)
 
     def generate(self) -> float:
@@ -86,12 +84,6 @@ class FloatNegativeBuilder(FloatBuilder):
 
 @dataclass
 class FloatStrBuilder(FloatBuilder):
-    def __post_init__(self):
-        assert self.min_value <= self.max_value
-        if self.default is not None:
-            assert isinstance(self.default, str)
-        assert isinstance(self.decimal_places, int)
-
     def sanitize(self, value: Any) -> str:
         return str(value)
 
@@ -109,6 +101,9 @@ class PercentageBuilder(FloatBuilder):
 
 @dataclass
 class DecimalBuilder(FloatBuilder):
+    default: Decimal | None = None
+    default_type: type = Decimal
+
     def _round(self, value: float) -> Decimal:
         rounding = f"0.{'0' * self.decimal_places}"
         return Decimal(value).quantize(Decimal(rounding), rounding="ROUND_HALF_UP")
