@@ -32,6 +32,21 @@ def test_file_text_builder_file_empty(tmp_path):
         FileTextBuilder(filepath=file, min_word_number=1, max_word_number=5)
 
 
+def test_file_text_builder(tmp_path):
+    file = tmp_path / "test.txt"
+    file.write_text(
+        """hi
+hello
+world
+bye
+"""
+    )
+    builder = FileTextBuilder(filepath=file, min_word_number=1, max_word_number=5)
+    text = builder.build()
+    for word in text.split():
+        assert word in ["hi", "hello", "world", "bye"]
+
+
 def test_uuid4_str_builder_valid_uuid():
     builder = Uuid4StrBuilder()
     for _ in range(100):
