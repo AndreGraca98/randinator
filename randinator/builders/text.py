@@ -77,6 +77,8 @@ class FileTextBuilder(Builder):
         assert isinstance(self.pre_word, str), f"{self=}"
         assert isinstance(self.post_word, str), f"{self=}"
         assert isinstance(self.filepath, (Path, str)), f"{self=}"
+        assert Path(self.filepath).is_file(), f"{self.filepath} does not exist"
+        assert Path(self.filepath).read_text(), f"{self.filepath} is empty"
 
     def generate(self) -> str:
         nwords = random.randint(self.min_word_number, self.max_word_number)
